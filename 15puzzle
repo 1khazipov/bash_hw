@@ -1,0 +1,76 @@
+#!/bin/bash
+# Задача 3. Игра в 15
+
+# 0 - пустая ячейка, empty - ее индекс
+board=(1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 0)
+empty=15
+
+# заполняет массив near индексами ячеек рядом с пустой
+find_near() {
+    near=()
+    local row=$((empty / 4)) col=$((empty % 4))
+    if ((col > 0)); then near+=($((empty - 1))); fi
+    if ((row > 0)); then near+=($((empty - 4))); fi
+    if ((col < 3)); then near+=($((empty + 1))); fi
+    if ((row < 3)); then near+=($((empty + 4))); fi
+}
+
+# двигает костяшку с индексом $1 на пустое место
+move() {
+    board[empty]=${board[$1]}
+    board[$1]=0
+    empty=$1
+}
+
+print_board() {
+    echo "+-------------------+"
+    for ((r = 0; r < 4; r++)); do
+        for ((c = 0; c < 4; c++)); do
+            value=${board[r * 4 + c]}
+            if ((value == 0)); then value=""; fi
+            printf "| %2s " "$value"
+        done
+        echo "|"
+        if ((r < 3)); then echo "|-------------------|"; fi
+    done
+    echo "+-------------------+"
+}
+
+# перемешиваем случайными ходами - так головоломку всегда можно собрать
+for ((k = 0; k < 1000; k++)); do
+    find_near
+    move ${near[RANDOM % ${#near[@]}]}
+done
+
+step=1
+error=""
+while true; do
+    echo "Ход № $step"
+    print_board
+    if [[ -n "$error" ]]; then echo -e "$error"; fi
+    error=""
+    read -p "Ваш ход (q - выход): " input || exit 0
+    echo
+    if [[ "$input" == "q" ]]; then echo "Выход"; exit 0; fi
+
+    # ищем введенное число среди соседей пустой ячейки
+    find_near
+    found=-1
+    list=""
+    for i in "${near[@]}"; do
+        if [[ "${board[i]}" == "$input" ]]; then found=$i; fi
+        list="$list${board[i]}, "
+    done
+    if ((found == -1)); then
+        error="Неверный ход!\nНевозможно костяшку $input передвинуть на пустую ячейку.\nМожно выбрать: ${list%, }"
+        continue
+    fi
+
+    move $found
+    if [[ "${board[*]}" == "1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 0" ]]; then
+        echo "Вы собрали головоломку за $step ходов."
+        print_board
+        exit 0
+    fi
+    ((step++))
+done

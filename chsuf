@@ -1,0 +1,23 @@
+#!/bin/bash
+# Задача 7. Изменение суффикса в именах файлов
+# Использование: chsuf каталог старый_суффикс новый_суффикс
+
+dir=$1
+old=$2
+new=$3
+if [[ $# -ne 3 ]]; then echo "Использование: $0 каталог старый_суффикс новый_суффикс"; exit 1; fi
+if [[ ! -d "$dir" ]]; then echo "Ошибка: $dir не является каталогом"; exit 1; fi
+# суффикс: точка, потом хотя бы один символ, и больше точек нет
+if [[ ! "$old" =~ ^\.[^.]+$ ]]; then echo "Ошибка: неверный старый суффикс $old"; exit 1; fi
+if [[ ! "$new" =~ ^\.[^.]+$ ]]; then echo "Ошибка: неверный новый суффикс $new"; exit 1; fi
+
+find "$dir" -type f -print0 | while IFS= read -r -d '' file; do
+    name=${file##*/}
+    rest=${name#.}   # точка в начале имени не считается началом суффикса
+    if [[ "$rest" == *.* && ".${rest##*.}" == "$old" ]]; then
+        target="${file%/*}/${name/%"$old"/"$new"}"
+        if [[ -e "$target" ]]; then echo "Ошибка: $target уже существует"; continue; fi
+        mv -- "$file" "$target"
+        echo "$file -> $target"
+    fi
+done

@@ -1,0 +1,55 @@
+#!/bin/bash
+# Задача 4. Ханойская башня
+
+trap 'echo; echo "Чтобы завершить игру, введите q или Q"' SIGINT
+
+# стек - строка, перед каждым числом пробел, последнее число - вершина
+declare -A stack=([A]=" 8 7 6 5 4 3 2 1" [B]="" [C]="")
+
+print_stacks() {
+    read -ra a <<< "${stack[A]}"
+    read -ra b <<< "${stack[B]}"
+    read -ra c <<< "${stack[C]}"
+    for ((row = 7; row >= 0; row--)); do
+        echo "|${a[row]:- }| |${b[row]:- }| |${c[row]:- }|"
+    done
+    echo "+-+ +-+ +-+"
+    echo " A   B   C"
+}
+
+step=1
+print_stacks
+while true; do
+    read -p "Ход № $step (откуда, куда): " input
+    status=$?
+    if ((status > 128)); then continue; fi   # нажали Ctrl+C - спрашиваем заново
+    if ((status != 0)); then exit 1; fi      # нажали Ctrl+D - выходим
+    if [[ "$input" == [qQ] ]]; then echo "Выход"; exit 1; fi
+
+    # убираем пробелы и переводим в верхний регистр
+    move=${input// /}
+    move=${move^^}
+    from=${move:0:1}
+    to=${move:1:1}
+
+    if [[ ! "$move" =~ ^[ABC][ABC]$ ]]; then
+        echo "Ошибка! Введите два имени стеков (A, B, C), например: ab или A C"
+    elif [[ "$from" == "$to" ]]; then
+        echo "Ошибка! Стеки должны быть разными."
+    elif [[ -z "${stack[$from]}" ]]; then
+        echo "Ошибка! Стек $from пустой."
+    elif [[ -n "${stack[$to]}" && ${stack[$from]##* } -gt ${stack[$to]##* } ]]; then
+        echo "Такое перемещение запрещено!"
+    else
+        # снимаем вершину со стека from и кладем на to
+        top=${stack[$from]##* }
+        stack[$from]=${stack[$from]% *}
+        stack[$to]="${stack[$to]} $top"
+        ((step++))
+        print_stacks
+        if [[ "${stack[B]}" == " 8 7 6 5 4 3 2 1" || "${stack[C]}" == " 8 7 6 5 4 3 2 1" ]]; then
+            echo "Победа! Вы переложили башню за $((step - 1)) ходов."
+            exit 0
+        fi
+    fi
+done

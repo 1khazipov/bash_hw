@@ -1,0 +1,17 @@
+#!/bin/bash
+# Задача 9. Добавление строки в начало текстового файла
+# Использование: addline каталог
+
+dir=$1
+if [[ ! -d "$dir" ]]; then echo "Ошибка: $dir не является каталогом"; exit 1; fi
+
+line="Approved $(whoami) $(date -I)"
+for file in "$dir"/*.txt; do
+    if [[ ! -f "$file" ]]; then continue; fi
+    tmp=$(mktemp)
+    echo "$line" > "$tmp"
+    cat "$file" >> "$tmp"
+    cat "$tmp" > "$file"
+    rm "$tmp"
+    echo "Обработан: $file"
+done

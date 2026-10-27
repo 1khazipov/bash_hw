@@ -1,0 +1,43 @@
+#!/bin/bash
+# Задача 1. Экстрасенс
+
+RED='\e[31m'
+GREEN='\e[32m'
+RESET='\e[0m'
+step=1
+hit=0
+miss=0
+numbers=()
+
+while true; do
+    number=${RANDOM: -1}
+    echo "Step: $step"
+    # спрашиваем, пока не введут одну цифру или q
+    while true; do
+        read -p "Please enter number from 0 to 9 (q - quit): " input || exit 0
+        case "$input" in
+            [0-9]) break ;;
+            q) echo "Bye"; exit 0 ;;
+            *) echo "Error! Enter one digit from 0 to 9" ;;
+        esac
+    done
+
+    if [[ "$input" == "$number" ]]; then
+        echo "Hit! My number: $number"
+        ((hit++))
+        numbers+=("${GREEN}${number}${RESET}")
+    else
+        echo "Miss! My number: $number"
+        ((miss++))
+        numbers+=("${RED}${number}${RESET}")
+    fi
+
+    hit_percent=$((hit * 100 / (hit + miss)))
+    echo "Hit: ${hit_percent}% Miss: $((100 - hit_percent))%"
+
+    # последние 10 чисел (если чисел меньше 10 - выводим все)
+    start=$((${#numbers[@]} - 10))
+    if ((start < 0)); then start=0; fi
+    echo -e "Numbers: ${numbers[@]:start}\n"
+    ((step++))
+done

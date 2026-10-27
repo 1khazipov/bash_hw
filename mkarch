@@ -1,0 +1,31 @@
+#!/bin/bash
+# Задача 5. Самораспаковывающийся архив
+
+usage() { echo "Использование: $0 -d dir_path -n name"; exit 1; }
+
+while getopts "d:n:" opt; do
+    case $opt in
+        d) dir_path=$OPTARG ;;
+        n) name=$OPTARG ;;
+        *) usage ;;
+    esac
+done
+if [[ -z "$dir_path" || -z "$name" ]]; then usage; fi
+if [[ ! -d "$dir_path" ]]; then echo "Ошибка: $dir_path не каталог"; exit 1; fi
+
+# часть скрипта, которая будет распаковывать архив
+cat > "$name" << 'END'
+#!/bin/bash
+outdir="."
+if [[ "$1" == "-o" && -n "$2" ]]; then outdir=$2; fi
+mkdir -p "$outdir"
+sed '1,/^__ARCHIVE__$/d' "$0" | base64 -d | tar -xzf - -C "$outdir"
+echo "Архив распакован в $outdir"
+exit 0
+__ARCHIVE__
+END
+
+# добавляем в конец файла сам архив в виде текста (base64)
+tar -czf - -C "$dir_path" . | base64 >> "$name"
+chmod a+x "$name"
+echo "Создан архив $name"

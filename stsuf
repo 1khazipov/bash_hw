@@ -1,0 +1,18 @@
+#!/bin/bash
+# Задача 8. Статистика по суффиксам имен файлов
+# Использование: stsuf каталог
+
+dir=$1
+if [[ ! -d "$dir" ]]; then echo "Ошибка: $dir не является каталогом"; exit 1; fi
+
+declare -A stats
+while IFS= read -r -d '' file; do
+    name=${file##*/}
+    rest=${name#.}   # точка в начале имени не считается началом суффикса
+    if [[ "$rest" == *.* ]]; then suffix=".${rest##*.}"; else suffix="no suffix"; fi
+    stats[$suffix]=$((${stats[$suffix]} + 1))
+done < <(find "$dir" -type f -print0)
+
+# печатаем "количество суффикс", сортируем по количеству, потом меняем местами
+for key in "${!stats[@]}"; do echo "${stats[$key]} $key"; done | sort -rn |
+    while read -r count key; do echo "$key: $count"; done
